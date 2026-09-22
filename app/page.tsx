@@ -9,7 +9,20 @@ import { UNIT_IDS, UNITS, type Outcome, type UnitId, type Verdict } from '@/lib/
 import { commandSchema, evaluateJev, JevError } from '@/lib/jev';
 import { clearKey, loadKey, native, openExternal, saveKey, transport } from '@/lib/native';
 
-const INITIAL_PROPOSAL = '想養一隻貓，但每天加班到十點，現在該養嗎？';
+// Everyday yes-or-no dilemmas; each visit opens with one at random.
+const EXAMPLES = [
+  '想養一隻貓，但每天加班到十點，現在該養嗎？',
+  '喜歡的人三天沒回消息了，我要主動再找他嗎？',
+  '同事升職了，我比他早來兩年，要找老闆談加薪嗎？',
+  '健身卡還剩半年沒去過幾次，要轉讓出去嗎？',
+  '剛買的手機降價一千，還能七天無理由退貨，要退了重買嗎？',
+  '朋友又找我借兩萬塊，上次的還沒還，這次還要借嗎？',
+  '房東要漲租兩成，搬家要折騰一個月，我該搬嗎？',
+  '年假只剩兩天，老闆說項目很急，我還要按原計劃去旅行嗎？',
+  '爸媽催我回老家考編，我在大城市月薪一萬，要回去嗎？',
+  '存款夠付首付了，但要背三十年房貸，現在該買房嗎？',
+];
+const pickExample = () => EXAMPLES[Math.floor(Math.random() * EXAMPLES.length)];
 
 type Phase = 'idle' | 'evaluating' | 'revealing' | 'complete';
 // The screen is laid out at a reference size and scaled as one piece: tall screens use the phone
@@ -47,14 +60,15 @@ const DecisionUnit = memo(function DecisionUnit({ id, vote, phase, visible }: { 
     <div className="unit-body">
       <div className="unit-ident"><span>{unit.identity}</span><b>{unit.number}</b></div>
       <h2>{unit.name}<span>{unit.dimension}</span></h2>
-      <div className={`unit-answer ${ready ? 'answer-revealed' : ''}`} aria-label={ready ? (vote === 'error' ? '錯誤' : vote ? '是' : '否') : phase === 'idle' ? '待命' : '判斷中'}>{ready ? (vote === 'error' ? <span style={{fontSize:'.62em'}}>錯誤</span> : vote ? '是' : '否') : <span className="standby">{phase === 'idle' ? '待 命' : '判 斷 中'}</span>}</div>
+      <div className={`unit-answer ${ready ? 'answer-revealed' : ''}`} aria-label={ready ? (vote === 'error' ? '錯誤' : vote ? '是' : '否') : phase === 'idle' ? '待命' : '判斷中'}>{ready ? (vote === 'error' ? <span style={{fontSize:'.62em'}}>錯誤</span> : vote ? '是' : '否') : <span className="standby">{phase === 'idle' ? '待命' : '判斷中'}</span>}</div>
       <div className="unit-foot"><span>{unit.description}</span><i/><i/><i/></div>
     </div>
   </section>;
 });
 export default function Home() {
   const [crtEnabled, setCrtEnabled] = useState(true);
-  const proposalRef = useRef(INITIAL_PROPOSAL);
+  const [example] = useState(pickExample);
+  const proposalRef = useRef(example);
   const [phase, setPhase] = useState<Phase>('idle');
   const [verdict, setVerdict] = useState<Outcome | null>(null);
   const [visible, setVisible] = useState(0);
@@ -128,7 +142,7 @@ export default function Home() {
     <header className="system-header"><a className="system-name" href="/" aria-label="MAGI 首頁"><span className="system-emblem" aria-hidden="true">M</span><span className="system-title"><small>MAGI://</small>人格模擬系統</span></a><Button variant="ghost" className={`connection-button ${verified?'connection-live':''}`} onClick={openConnection} disabled={busy}><i/>{verified?'JEV 在線':connected?'密鑰已就緒':'連接密鑰'}<KeyRound size={15}/></Button></header>
     <div className="terminal">
       <div className="terminal-heading"><div className="wordmark"><h1><span className="magi-logotype">MAGI</span><span className="terminal-cursor" aria-hidden="true"/></h1><p className="episode-title" aria-label="超高智能即時決策系統"><span>超高智能</span><span>即時決策系統</span></p></div><div className="protocol"><span>THREE MINDS.</span><span>ONE DECISION.</span></div></div>
-      <ProposalConsole initialValue={INITIAL_PROPOSAL} busy={busy} onChange={changeProposal} onSubmit={submit}/>
+      <ProposalConsole initialValue={example} busy={busy} onChange={changeProposal} onSubmit={submit}/>
       <div className="board-frame">
         <div className={`decision-board ${busy?'board-active':''}`} aria-busy={busy}>
           <svg className="decision-circuits" viewBox="0 0 960 340" preserveAspectRatio="none" aria-hidden="true"><path d="M480 120V222M210 242H390L480 222L570 242H750"/><path className="circuit-secondary" d="M455 140V200L365 221H225M505 140V200L595 221H735"/><circle cx="480" cy="222" r="16"/><path d="M473 222h14M480 215v14"/></svg>

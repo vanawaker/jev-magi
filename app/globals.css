@@ -264,7 +264,6 @@ body{font-family:var(--mono);font-weight:700;background:#141310;color:var(--text
 .unit-body h2{font-size:calc(25 * var(--bu));gap:calc(8 * var(--bu));margin-top:calc(4 * var(--bu))}
 .unit-body h2 span{font-size:calc(29 * var(--bu))}
 .unit-answer{font-size:calc(80 * var(--bu));min-height:calc(62 * var(--bu))}
-.unit-answer .standby{font-size:calc(27 * var(--bu));letter-spacing:calc(3 * var(--bu))}
 .unit-foot{font-size:calc(14 * var(--bu));padding-top:calc(5 * var(--bu))}
 @container magi (max-width:760px){
   .decision-board{aspect-ratio:360/329;width:min(100cqw,calc(100cqh * 360 / 329));--bu:calc(100cqw / 360)}
@@ -273,8 +272,11 @@ body{font-family:var(--mono);font-weight:700;background:#141310;color:var(--text
   .unit-body h2{font-size:calc(16 * var(--bu));letter-spacing:calc(-.7 * var(--bu));gap:calc(4 * var(--bu));margin:0}
   .unit-body h2 span{font-size:calc(25 * var(--bu))}
   .unit-answer{font-size:calc(61 * var(--bu));min-height:calc(52 * var(--bu))}
-  .unit-answer .standby{font-size:calc(27 * var(--bu));letter-spacing:calc(2 * var(--bu))}
   .unit-foot{font-size:calc(14 * var(--bu));padding-top:calc(5 * var(--bu))}
 }
-/* Wide screens set the title on one line. */
-@container magi (min-width:761px){.wordmark .episode-title{flex-direction:row;gap:0}}
+/* Phones keep the title on two lines; tablets and wider screens set it on one. */
+@container magi (min-width:480px){.wordmark .episode-title{flex-direction:row;column-gap:0}}
+/* Standby text matches 錯誤: two thirds of the answer size, scaling with the units. */
+.unit-answer .standby{font-size:.62em;letter-spacing:.12em}
+/* Wide portrait screens (tablets) fit the title on one line beside the logotype. */
+@container magi (min-width:480px) and (max-width:760px){.wordmark .episode-title{font-size:calc((100cqw - 196px) / 9.6)}}

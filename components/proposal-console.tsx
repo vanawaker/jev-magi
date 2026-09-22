@@ -15,6 +15,8 @@ type Props = {
 export const ProposalConsole = memo(function ProposalConsole({ initialValue, busy, onChange, onSubmit }: Props) {
   // Keystrokes stay in the editor; the three units do not re-render for each letter.
   const [value, setValue] = useState(initialValue);
+  // The opening example is only a demo: touching the editor clears it so typing starts fresh.
+  const [example, setExample] = useState(true);
   const placeholder = '請輸入你需要抉擇的問題';
   return <form className="proposal-console" onSubmit={event => {
     event.preventDefault();
@@ -29,6 +31,7 @@ export const ProposalConsole = memo(function ProposalConsole({ initialValue, bus
         {/* Native wrapping sizes one or two lines without reading layout during input. */}
         <div className="proposal-mirror" aria-hidden="true">{(value || placeholder) + '\u200b'}</div>
         <Textarea id="proposal" rows={1} placeholder={placeholder} value={value} maxLength={1200} disabled={busy}
+          onFocus={() => { if (example) { setExample(false); setValue(''); onChange(''); } }}
           onChange={event => { setValue(event.target.value); onChange(event.target.value); }}
           onKeyDown={event => {
             if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && !event.nativeEvent.isComposing && event.keyCode !== 229) {
