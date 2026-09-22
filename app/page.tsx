@@ -9,7 +9,7 @@ import { UNIT_IDS, UNITS, type Outcome, type UnitId, type Verdict } from '@/lib/
 import { commandSchema, evaluateJev, JevError } from '@/lib/jev';
 import { clearKey, loadKey, native, openExternal, saveKey, transport } from '@/lib/native';
 
-const INITIAL_PROPOSAL = '我不愛她，但彩禮38.8萬已經給了，我還要繼續嗎？';
+const INITIAL_PROPOSAL = '想養一隻貓，但每天加班到十點，現在該養嗎？';
 
 type Phase = 'idle' | 'evaluating' | 'revealing' | 'complete';
 // The screen is laid out at a reference size and scaled as one piece: tall screens use the phone

@@ -10,7 +10,7 @@
   --popover:var(--console); --popover-foreground:var(--text); --primary:var(--amber); --primary-foreground:#201408;
   --secondary:#e6ab55; --secondary-foreground:var(--text); --muted-foreground:var(--muted);
   --accent:#32291d; --accent-foreground:var(--amber); --destructive:var(--no); --border:#58442b; --input:#58442b; --ring:var(--amber);
-  --radius:2px; --mono:Menlo,"MAGI Mono","PingFang TC","Microsoft JhengHei","Noto Sans CJK TC",sans-serif;
+  --radius:2px; --mono:Menlo,"MAGI Mono","PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
   --sans:var(--mono);
   color-scheme:dark;
 }
@@ -99,8 +99,8 @@ body{font-family:var(--mono);font-weight:700;background:#141310;color:var(--text
 /* DejaVu Sans Mono, the design Menlo is based on, gives other platforms the same Latin text as Apple devices. */
 @font-face{font-family:"MAGI Mono";src:url("../assets/fonts/magi-mono-regular.woff2") format("woff2");font-style:normal;font-weight:400;font-display:swap}
 @font-face{font-family:"MAGI Mono";src:url("../assets/fonts/magi-mono-bold.woff2") format("woff2");font-style:normal;font-weight:700;font-display:swap}
-@font-face{font-family:"MAGI Mincho";src:url("../assets/fonts/noto-serif-tc-black.woff2") format("woff2");font-style:normal;font-weight:900;font-display:swap}
-:root{--eva-serif:"MAGI Mincho","Songti TC","Songti SC","Noto Serif CJK TC",serif}
+@font-face{font-family:"MAGI Mincho";src:url("../assets/fonts/noto-serif-sc-black.woff2") format("woff2");font-style:normal;font-weight:900;font-display:swap}
+:root{--eva-serif:"MAGI Mincho","Songti SC","Noto Serif CJK SC",serif}
 .magi-app{font-size:18px}
 .terminal-heading{gap:24px;margin-bottom:28px;align-items:center}
 .wordmark{align-items:center;gap:40px;min-width:0}
@@ -245,10 +245,7 @@ body{font-family:var(--mono);font-weight:700;background:#141310;color:var(--text
 .magi-stage{container:magi / size;position:absolute;top:0;left:0;transform-origin:0 0;width:100%;height:100%}
 .magi-app{height:100%;min-height:0;max-width:none}
 .terminal{max-width:none}
-/* The three units keep their proportions and may stretch only a little into spare height. */
 .board-frame{container:board / size;min-height:0;display:grid;place-items:center}
-.decision-board{width:min(100cqw,calc(100cqh * 3));height:min(100cqh,calc(100cqw / 2.4))}
-@container magi (max-width:760px){.decision-board{width:min(100cqw,calc(100cqh * 1.27));height:min(100cqh,calc(100cqw / 1))}}
 
 /* Header: one line, larger Chinese. */
 .system-name{white-space:nowrap}
@@ -258,3 +255,26 @@ body{font-family:var(--mono);font-weight:700;background:#141310;color:var(--text
 @container magi (max-width:600px){.system-name>span.system-title{font-size:16px;gap:6px;letter-spacing:.08em}.system-title small{font-size:10px}.connection-button{font-size:14px;letter-spacing:.04em}}
 /* Keep the unit caption clear of the cut top-left corner. */
 .unit-ident{padding-left:1em}
+/* The three units are one drawing: frames, positions and text all scale with the board.
+   Design sizes: 1196×412 on wide screens, 360×329 on tall ones (the phone). */
+.decision-board{container:units / inline-size;aspect-ratio:1196/412;width:min(100cqw,calc(100cqh * 1196 / 412));height:auto;--bu:calc(100cqw / 1196)}
+.decision-unit{width:31.25%;height:64%}
+.unit-body{padding:calc(12 * var(--bu)) calc(20 * var(--bu))}
+.unit-ident{font-size:calc(12 * var(--bu));line-height:1.2}
+.unit-body h2{font-size:calc(25 * var(--bu));gap:calc(8 * var(--bu));margin-top:calc(4 * var(--bu))}
+.unit-body h2 span{font-size:calc(29 * var(--bu))}
+.unit-answer{font-size:calc(80 * var(--bu));min-height:calc(62 * var(--bu))}
+.unit-answer .standby{font-size:calc(27 * var(--bu));letter-spacing:calc(3 * var(--bu))}
+.unit-foot{font-size:calc(14 * var(--bu));padding-top:calc(5 * var(--bu))}
+@container magi (max-width:760px){
+  .decision-board{aspect-ratio:360/329;width:min(100cqw,calc(100cqh * 360 / 329));--bu:calc(100cqw / 360)}
+  .decision-unit{width:47%;height:48.2%}
+  .unit-body{padding:calc(10 * var(--bu)) calc(12 * var(--bu)) calc(8 * var(--bu))}
+  .unit-body h2{font-size:calc(16 * var(--bu));letter-spacing:calc(-.7 * var(--bu));gap:calc(4 * var(--bu));margin:0}
+  .unit-body h2 span{font-size:calc(25 * var(--bu))}
+  .unit-answer{font-size:calc(61 * var(--bu));min-height:calc(52 * var(--bu))}
+  .unit-answer .standby{font-size:calc(27 * var(--bu));letter-spacing:calc(2 * var(--bu))}
+  .unit-foot{font-size:calc(14 * var(--bu));padding-top:calc(5 * var(--bu))}
+}
+/* Wide screens set the title on one line. */
+@container magi (min-width:761px){.wordmark .episode-title{flex-direction:row;gap:0}}
