@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { ArrowUpRight, KeyRound, Power, Radio } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,7 +37,20 @@ function fitStage(width: number, height: number): Stage {
   if (!wide) k = Math.max(k, width / 600);
   return { k, width: width / k, height: height / k };
 }
-type Reply = { status: number; data: Partial<Verdict> & { invalid?: boolean; error?: string; code?: string } };
+export type Reply = { status: number; data: Partial<Verdict> & { invalid?: boolean; error?: string; code?: string } };
+// A page hosting MAGI on its own server can swap the server protocol and the copy around the
+// screen; everything else stays the same.
+export type Host = {
+  status?: () => Promise<{ configured: boolean }>;
+  vote?: (proposal: string, key: string, signal: AbortSignal) => Promise<Reply>;
+  keyCodes?: string[];
+  badge?: ReactNode;
+  keyLabel?: (state: { apiKey: boolean; verified: boolean; connected: boolean }) => ReactNode;
+  notice?: (state: { apiKey: boolean }) => ReactNode;
+  dialog?: { title?: ReactNode; description?: ReactNode; placeholder?: string; note?: ReactNode; requireKey?: boolean };
+  footer?: ReactNode;
+};
+const serverStatus = () => fetch('/api/status').then(r => r.json() as Promise<{ configured?: boolean }>).then(d => ({ configured: d.configured === true }));
 // The web build asks its own server; the packaged app calls TypeSafe directly.
 async function requestVote(proposal: string, key: string, signal: AbortSignal): Promise<Reply> {
   if (!native) {
@@ -65,7 +78,7 @@ const DecisionUnit = memo(function DecisionUnit({ id, vote, phase, visible }: { 
     </div>
   </section>;
 });
-export default function Home() {
+export default function Home({ host = {} }: { host?: Host }) {
   const [crtEnabled, setCrtEnabled] = useState(true);
   const [example] = useState(pickExample);
   const proposalRef = useRef(example);
@@ -98,7 +111,7 @@ export default function Home() {
   useEffect(() => {
     let active = true;
     if (native) loadKey().then(saved => { if (active && saved) setApiKey(saved); }).catch(() => {});
-    else fetch('/api/status').then(r => r.json() as Promise<{configured?:boolean}>).then(d => { if (active) setServerReady(d.configured === true); }).catch(() => {});
+    else (host.status ?? serverStatus)().then(d => { if (active) setServerReady(d.configured); }).catch(() => {});
     return () => { active = false; controllerRef.current?.abort(); timers.current.forEach(clearTimeout); };
   }, []);
   const changeProposal = useCallback((value: string) => {
@@ -116,10 +129,10 @@ export default function Home() {
     const controller = new AbortController(); controllerRef.current = controller;
     const timeout = setTimeout(() => controller.abort(), 25000);
     try {
-      const { status, data } = await requestVote(text, key, controller.signal);
+      const { status, data } = await (host.vote ?? requestVote)(text, key, controller.signal);
       if (status !== 200) {
         if (status === 401) { setVerified(false); if (native) void clearKey().catch(() => {}); }
-        if (['KEY_REQUIRED','INVALID_KEY'].includes(data.code || '')) { setKeyDraft(key); setQueued(true); setConnectionOpen(true); }
+        if ((host.keyCodes ?? ['KEY_REQUIRED','INVALID_KEY']).includes(data.code || '')) { setKeyDraft(key); setQueued(true); setConnectionOpen(true); }
         throw new Error(data.error || '通信異常，請重新發起議決。');
       }
       if (data.invalid !== true && (!UNIT_IDS.every(id => typeof data.votes?.[id] === 'boolean') || typeof data.approved !== 'boolean')) throw new Error('答覆不完整，本次議決未成立。');
@@ -139,7 +152,8 @@ export default function Home() {
   return <div className={`crt-shell ${crtEnabled ? 'crt-on' : 'crt-off'}`}>
     <CrtEffects/>
     <div className="crt-picture"><div className="crt-scroll"><div ref={stageRef} className="magi-stage" style={stage ? { width: stage.width, height: stage.height, transform: `scale(${stage.k})` } : undefined}><main className="magi-app">
-    <header className="system-header"><a className="system-name" href="/" aria-label="MAGI 首頁"><span className="system-emblem" aria-hidden="true">M</span><span className="system-title"><small>MAGI://</small>人格模擬系統</span></a><Button variant="ghost" className={`connection-button ${verified?'connection-live':''}`} onClick={openConnection} disabled={busy}><i/>{verified?'JEV 在線':connected?'密鑰已就緒':'連接密鑰'}<KeyRound size={15}/></Button></header>
+    <header className="system-header">{host.badge ?? <a className="system-name" href="/" aria-label="MAGI 首頁"><span className="system-emblem" aria-hidden="true">M</span><span className="system-title"><small>MAGI://</small>人格模擬系統</span></a>}<Button variant="ghost" className={`connection-button ${verified?'connection-live':''}`} onClick={openConnection} disabled={busy}><i/>{host.keyLabel?.({ apiKey: Boolean(apiKey), verified, connected }) ?? (verified?'JEV 在線':connected?'密鑰已就緒':'連接密鑰')}<KeyRound size={15}/></Button></header>
+    {host.notice && <p className="access-summary">{host.notice({ apiKey: Boolean(apiKey) })}</p>}
     <div className="terminal">
       <div className="terminal-heading"><div className="wordmark"><h1><span className="magi-logotype">MAGI</span><span className="terminal-cursor" aria-hidden="true"/></h1><p className="episode-title" aria-label="超高智能即時決策系統"><span>超高智能</span><span>即時決策系統</span></p></div><div className="protocol"><span>THREE MINDS.</span><span>ONE DECISION.</span></div></div>
       <ProposalConsole initialValue={example} busy={busy} onChange={changeProposal} onSubmit={submit}/>
@@ -156,16 +170,16 @@ export default function Home() {
       </section>
       {error && <p className="transmission-note transmission-error" role="status"><Radio size={13}/><span>{error}</span></p>}
     </div>
-    <footer className="system-footer"><span>娛樂性投票</span><a href="https://docs.typesafe.ai/primitives/noul" target="_blank" rel="noreferrer" onClick={openExternal}>POWERED BY JEV <ArrowUpRight size={12}/></a><button type="button" className="crt-toggle" aria-pressed={crtEnabled} onClick={()=>setCrtEnabled(value=>!value)}>CRT / {crtEnabled?'開啟':'關閉'}</button></footer>
+    <footer className="system-footer"><span>{host.footer ?? '娛樂性投票'}</span><a href="https://docs.typesafe.ai/primitives/noul" target="_blank" rel="noreferrer" onClick={openExternal}>POWERED BY JEV <ArrowUpRight size={12}/></a><button type="button" className="crt-toggle" aria-pressed={crtEnabled} onClick={()=>setCrtEnabled(value=>!value)}>CRT / {crtEnabled?'開啟':'關閉'}</button></footer>
     </main></div></div></div>
     <Dialog open={connectionOpen} onOpenChange={value=>{setConnectionOpen(value);if(!value){setQueued(false);setKeyDraft('');}}}>
       <DialogContent className={`connection-dialog ${crtEnabled?'dialog-crt':''}`}>
-        <DialogHeader><span className="dialog-eyebrow"><Power size={15}/> SYSTEM CONNECTION</span><DialogTitle>喚醒三個判斷單元</DialogTitle><DialogDescription>填入 TypeSafe API Key。每次議決都會把你的需求發送給 Jev，從三個維度獨立投票。</DialogDescription></DialogHeader>
+        <DialogHeader><span className="dialog-eyebrow"><Power size={15}/> SYSTEM CONNECTION</span><DialogTitle>{host.dialog?.title ?? '喚醒三個判斷單元'}</DialogTitle><DialogDescription>{host.dialog?.description ?? '填入 TypeSafe API Key。每次議決都會把你的需求發送給 Jev，從三個維度獨立投票。'}</DialogDescription></DialogHeader>
         {error && <p className="key-error" role="alert">{error}</p>}
         <label htmlFor="typesafe-key" className="key-label">TYPE SAFE / API KEY</label>
-        <Input id="typesafe-key" type="password" autoComplete="off" spellCheck={false} maxLength={512} value={keyDraft} onChange={e=>{setKeyDraft(e.target.value);setError('');}} placeholder={serverReady?'伺服器密鑰已就緒，可留空':'貼上你的 API Key'}/>
-        <p className="key-note">{native ? 'Key 只保存在這台裝置上，只用於向 TypeSafe 發送議決。' : 'Key 僅在當前頁面記憶體中保留，重新載入即清除。議案與 Key 經本服務轉發至 TypeSafe，本服務不保存。'}</p>
-        <Button className="activate-button" disabled={!keyDraft.trim()&&!serverReady} onClick={()=>{const key=keyDraft.trim();const run=queued;setApiKey(key);if(native&&key)void saveKey(key).catch(()=>{});setKeyDraft('');setVerified(false);setConnectionOpen(false);setQueued(false);setError('');if(run)void submit(key);}}>{queued?'使用此 Key 並開始議決':'使用此 Key'}<ArrowUpRight size={16}/></Button>
+        <Input id="typesafe-key" type="password" autoComplete="off" spellCheck={false} maxLength={512} value={keyDraft} onChange={e=>{setKeyDraft(e.target.value);setError('');}} placeholder={host.dialog?.placeholder ?? (serverReady?'伺服器密鑰已就緒，可留空':'貼上你的 API Key')}/>
+        <p className="key-note">{host.dialog?.note ?? (native ? 'Key 只保存在這台裝置上，只用於向 TypeSafe 發送議決。' : 'Key 僅在當前頁面記憶體中保留，重新載入即清除。議案與 Key 經本服務轉發至 TypeSafe，本服務不保存。')}</p>
+        <Button className="activate-button" disabled={!keyDraft.trim()&&(host.dialog?.requireKey||!serverReady)} onClick={()=>{const key=keyDraft.trim();const run=queued;setApiKey(key);if(native&&key)void saveKey(key).catch(()=>{});setKeyDraft('');setVerified(false);setConnectionOpen(false);setQueued(false);setError('');if(run)void submit(key);}}>{queued?'使用此 Key 並開始議決':'使用此 Key'}<ArrowUpRight size={16}/></Button>
         {apiKey && <Button variant="ghost" className="clear-key-button" onClick={()=>{setApiKey('');if(native)void clearKey().catch(()=>{});setKeyDraft('');setVerified(false);setConnectionOpen(false);setQueued(false);setError('');}}>清除個人 Key</Button>}
         <a className="key-help" href="https://console.typesafe.ai/keys" target="_blank" rel="noreferrer" onClick={openExternal}>獲取自己的 TypeSafe API Key <ArrowUpRight size={12}/></a>
       </DialogContent>
