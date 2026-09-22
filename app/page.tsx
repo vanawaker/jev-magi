@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ArrowUpRight, KeyRound, Power, Radio } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,9 +9,21 @@ import { UNIT_IDS, UNITS, type Outcome, type UnitId, type Verdict } from '@/lib/
 import { commandSchema, evaluateJev, JevError } from '@/lib/jev';
 import { clearKey, loadKey, native, openExternal, saveKey, transport } from '@/lib/native';
 
-const INITIAL_PROPOSAL = '今晚不加班，回家打遊戲。';
+const INITIAL_PROPOSAL = '我不愛她，但彩禮38.8萬已經給了，我還要繼續嗎？';
 
 type Phase = 'idle' | 'evaluating' | 'revealing' | 'complete';
+// The screen is laid out at a reference size and scaled as one piece: tall screens use the phone
+// composition (388×666 inside the frame, an iPhone), wide screens the desktop one (1252×772).
+// Wider screens widen the input and panels while the three units keep their proportions.
+type Stage = { k: number; width: number; height: number };
+function fitStage(width: number, height: number): Stage {
+  const wide = width >= height * 0.9;
+  const [refWidth, refHeight] = wide ? [1252, 772] : [388, 666];
+  let k = Math.max(Math.min(width / refWidth, height / refHeight), wide ? 0.6 : 0.8);
+  // Tall screens stay within the phone breakpoint so they keep the phone composition.
+  if (!wide) k = Math.max(k, width / 600);
+  return { k, width: width / k, height: height / k };
+}
 type Reply = { status: number; data: Partial<Verdict> & { invalid?: boolean; error?: string; code?: string } };
 // The web build asks its own server; the packaged app calls TypeSafe directly.
 async function requestVote(proposal: string, key: string, signal: AbortSignal): Promise<Reply> {
@@ -54,6 +66,17 @@ export default function Home() {
   const [queued, setQueued] = useState(false);
   const [verified, setVerified] = useState(false);
   const pendingRef = useRef(false);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [stage, setStage] = useState<Stage | null>(null);
+  useLayoutEffect(() => {
+    const host = stageRef.current?.parentElement;
+    if (!host) return;
+    const update = () => setStage(fitStage(host.clientWidth, host.clientHeight));
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, []);
   const controllerRef = useRef<AbortController | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const busy = phase === 'evaluating' || phase === 'revealing';
@@ -101,14 +124,16 @@ export default function Home() {
   const yes = verdict && !('invalid' in verdict) ? UNIT_IDS.filter(id => verdict.votes[id]).length : 0;
   return <div className={`crt-shell ${crtEnabled ? 'crt-on' : 'crt-off'}`}>
     <CrtEffects/>
-    <div className="crt-picture"><div className="crt-scroll"><main className="magi-app">
-    <header className="system-header"><a className="system-name" href="/" aria-label="MAGI 首頁"><span className="system-emblem" aria-hidden="true">M</span><span>MAGI:// 人格模擬系統</span></a><Button variant="ghost" className={`connection-button ${verified?'connection-live':''}`} onClick={openConnection} disabled={busy}><i/>{verified?'JEV ONLINE':connected?'密鑰已就緒':'連接 JEV'}<KeyRound size={13}/></Button></header>
+    <div className="crt-picture"><div className="crt-scroll"><div ref={stageRef} className="magi-stage" style={stage ? { width: stage.width, height: stage.height, transform: `scale(${stage.k})` } : undefined}><main className="magi-app">
+    <header className="system-header"><a className="system-name" href="/" aria-label="MAGI 首頁"><span className="system-emblem" aria-hidden="true">M</span><span className="system-title"><small>MAGI://</small>人格模擬系統</span></a><Button variant="ghost" className={`connection-button ${verified?'connection-live':''}`} onClick={openConnection} disabled={busy}><i/>{verified?'JEV 在線':connected?'密鑰已就緒':'連接密鑰'}<KeyRound size={15}/></Button></header>
     <div className="terminal">
       <div className="terminal-heading"><div className="wordmark"><h1><span className="magi-logotype">MAGI</span><span className="terminal-cursor" aria-hidden="true"/></h1><p className="episode-title" aria-label="超高智能即時決策系統"><span>超高智能</span><span>即時決策系統</span></p></div><div className="protocol"><span>THREE MINDS.</span><span>ONE DECISION.</span></div></div>
       <ProposalConsole initialValue={INITIAL_PROPOSAL} busy={busy} onChange={changeProposal} onSubmit={submit}/>
-      <div className={`decision-board ${busy?'board-active':''}`} aria-busy={busy}>
-        <svg className="decision-circuits" viewBox="0 0 960 340" preserveAspectRatio="none" aria-hidden="true"><path d="M480 120V222M210 242H390L480 222L570 242H750"/><path className="circuit-secondary" d="M455 140V200L365 221H225M505 140V200L595 221H735"/><circle cx="480" cy="222" r="16"/><path d="M473 222h14M480 215v14"/></svg>
-        {UNIT_IDS.map((id, i)=><DecisionUnit key={id} id={id} vote={!verdict ? undefined : 'invalid' in verdict ? 'error' : verdict.votes[id]} phase={phase} visible={visible>i}/>)}
+      <div className="board-frame">
+        <div className={`decision-board ${busy?'board-active':''}`} aria-busy={busy}>
+          <svg className="decision-circuits" viewBox="0 0 960 340" preserveAspectRatio="none" aria-hidden="true"><path d="M480 120V222M210 242H390L480 222L570 242H750"/><path className="circuit-secondary" d="M455 140V200L365 221H225M505 140V200L595 221H735"/><circle cx="480" cy="222" r="16"/><path d="M473 222h14M480 215v14"/></svg>
+          {UNIT_IDS.map((id, i)=><DecisionUnit key={id} id={id} vote={!verdict ? undefined : 'invalid' in verdict ? 'error' : verdict.votes[id]} phase={phase} visible={visible>i}/>)}
+        </div>
       </div>
       <section className={`consensus ${phase==='complete' ? approved?'consensus-yes':'consensus-no':''}`} aria-label="最終議決" aria-live="polite" aria-atomic="true">
         <span className="consensus-label">綜合判定<span>FINAL DECISION</span></span>
@@ -118,7 +143,7 @@ export default function Home() {
       {error && <p className="transmission-note transmission-error" role="status"><Radio size={13}/><span>{error}</span></p>}
     </div>
     <footer className="system-footer"><span>娛樂性投票</span><a href="https://docs.typesafe.ai/primitives/noul" target="_blank" rel="noreferrer" onClick={openExternal}>POWERED BY JEV <ArrowUpRight size={12}/></a><button type="button" className="crt-toggle" aria-pressed={crtEnabled} onClick={()=>setCrtEnabled(value=>!value)}>CRT / {crtEnabled?'開啟':'關閉'}</button></footer>
-    </main></div></div>
+    </main></div></div></div>
     <Dialog open={connectionOpen} onOpenChange={value=>{setConnectionOpen(value);if(!value){setQueued(false);setKeyDraft('');}}}>
       <DialogContent className={`connection-dialog ${crtEnabled?'dialog-crt':''}`}>
         <DialogHeader><span className="dialog-eyebrow"><Power size={15}/> SYSTEM CONNECTION</span><DialogTitle>喚醒三個判斷單元</DialogTitle><DialogDescription>填入 TypeSafe API Key。每次議決都會把你的需求發送給 Jev，從三個維度獨立投票。</DialogDescription></DialogHeader>

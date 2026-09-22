@@ -15,7 +15,7 @@ type Props = {
 export const ProposalConsole = memo(function ProposalConsole({ initialValue, busy, onChange, onSubmit }: Props) {
   // Keystrokes stay in the editor; the three units do not re-render for each letter.
   const [value, setValue] = useState(initialValue);
-  const placeholder = '把你的念頭交給 MAGI…';
+  const placeholder = '請輸入你需要抉擇的問題';
   return <form className="proposal-console" onSubmit={event => {
     event.preventDefault();
     if (busy || !value.trim()) return;
