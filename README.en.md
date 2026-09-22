@@ -80,4 +80,4 @@ This is an unofficial fan-made entertainment project and is not affiliated with 
 
 ## License
 
-The code is released under the [MIT](LICENSE) license. The Noto Serif TC font is licensed under the [SIL Open Font License 1.1](assets/fonts/OFL.txt); style files in `vendor/` carry their own license notices.
+The code is released under the [MIT](LICENSE) license. The Noto Serif TC font is licensed under the [SIL Open Font License 1.1](assets/fonts/OFL.txt), and DejaVu Sans Mono under the terms in [DejaVu-LICENSE.txt](assets/fonts/DejaVu-LICENSE.txt); style files in `vendor/` carry their own license notices.

@@ -80,4 +80,4 @@ npx tauri build    # 构建当前平台的桌面应用，需要 Rust 工具链
 
 ## 许可
 
-代码以 [MIT](LICENSE) 许可发布。字体 Noto Serif TC 以 [SIL Open Font License 1.1](assets/fonts/OFL.txt) 授权；`vendor/` 目录中的样式文件附有各自的许可说明。
+代码以 [MIT](LICENSE) 许可发布。字体 Noto Serif TC 以 [SIL Open Font License 1.1](assets/fonts/OFL.txt) 授权，DejaVu Sans Mono 的许可见 [DejaVu-LICENSE.txt](assets/fonts/DejaVu-LICENSE.txt)；`vendor/` 目录中的样式文件附有各自的许可说明。

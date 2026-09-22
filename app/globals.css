@@ -10,7 +10,7 @@
   --popover:var(--console); --popover-foreground:var(--text); --primary:var(--amber); --primary-foreground:#201408;
   --secondary:#e6ab55; --secondary-foreground:var(--text); --muted-foreground:var(--muted);
   --accent:#32291d; --accent-foreground:var(--amber); --destructive:var(--no); --border:#58442b; --input:#58442b; --ring:var(--amber);
-  --radius:2px; --mono:Menlo,"Cascadia Mono","Courier New","PingFang TC","Microsoft JhengHei",monospace;
+  --radius:2px; --mono:Menlo,"MAGI Mono","PingFang TC","Microsoft JhengHei","Noto Sans CJK TC",sans-serif;
   --sans:var(--mono);
   color-scheme:dark;
 }
@@ -94,6 +94,9 @@ body{font-family:var(--mono);font-weight:700;background:#141310;color:var(--text
 @media(prefers-reduced-motion:reduce){.crt-sweep{display:none}.terminal-cursor{animation:none}}
 
 /* Large, tightly set Mincho titles; readable terminal copy on every screen. */
+/* DejaVu Sans Mono, the design Menlo is based on, gives other platforms the same Latin text as Apple devices. */
+@font-face{font-family:"MAGI Mono";src:url("../assets/fonts/magi-mono-regular.woff2") format("woff2");font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:"MAGI Mono";src:url("../assets/fonts/magi-mono-bold.woff2") format("woff2");font-style:normal;font-weight:700;font-display:swap}
 @font-face{font-family:"MAGI Mincho";src:url("../assets/fonts/noto-serif-tc-black.woff2") format("woff2");font-style:normal;font-weight:900;font-display:swap}
 :root{--eva-serif:"MAGI Mincho","Songti TC","Songti SC","Noto Serif CJK TC",serif}
 .magi-app{font-size:18px}
