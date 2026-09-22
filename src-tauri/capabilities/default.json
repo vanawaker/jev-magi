@@ -1,0 +1,10 @@
+{
+  "identifier": "default",
+  "description": "The main window may call TypeSafe and open TypeSafe pages in the system browser.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    { "identifier": "http:default", "allow": [{ "url": "https://api.typesafe.ai/*" }] },
+    { "identifier": "opener:allow-open-url", "allow": [{ "url": "https://docs.typesafe.ai/*" }, { "url": "https://console.typesafe.ai/*" }] }
+  ]
+}

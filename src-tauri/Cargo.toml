@@ -1,0 +1,26 @@
+[package]
+name = "jev-magi"
+version = "1.0.0"
+description = "A three-perspective yes-or-no voting app powered by TypeSafe Jev"
+license = "MIT"
+edition = "2021"
+
+[lib]
+name = "jev_magi_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-http = "~2.6"
+tauri-plugin-opener = "~2.5"
+
+[target.'cfg(not(target_os = "android"))'.dependencies]
+keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1

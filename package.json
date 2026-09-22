@@ -1,0 +1,46 @@
+{
+  "name": "jev-magi",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A three-perspective yes-or-no voting page powered by TypeSafe Jev.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "build": "vite build",
+    "start": "vite build && node server/main.mjs",
+    "tauri": "tauri",
+    "test": "node --test tests/*.test.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "2.11.1",
+    "@tauri-apps/plugin-http": "2.6.1",
+    "@tauri-apps/plugin-opener": "2.5.5",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "lucide-react": "1.31.0",
+    "radix-ui": "1.6.7",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "tailwind-merge": "3.6.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.2.1",
+    "@tauri-apps/cli": "2.11.5",
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.2",
+    "tailwindcss": "4.2.1",
+    "tw-animate-css": "1.4.0",
+    "typescript": "5.9.3",
+    "vite": "8.0.13"
+  },
+  "allowScripts": {
+    "fsevents": false
+  }
+}
